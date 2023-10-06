@@ -1,32 +1,33 @@
 #include "EvenOddNumbers.h"
-
+bool isEven = true;
 void EvenOddNumbers::printEvenNumbers() {
-	for (int i = 0;i <= maxNumber; i++) {
-		unique_lock <mutex> lock(printMutex);	//
-		while (input % 2 != 0) {		
-			//wait until an even number comes
-			lock.unlock();
-			this_thread::yield();				//Meanwhile, allowing other threads to run
-			lock.lock();
-			//chrono::milliseconds(1000);
+	while (input < maxNumber) {
+		unique_lock <mutex> lock(printMutex);
+		if (!isEven) {
+			//cout << "even" << endl;
+			cv.wait(lock);	//current thread is blocked until the condition variable is notified
 		}
+		this_thread::sleep_for(chrono::seconds(1));
 		cout << "Thread 1:" << input << endl;
 		input++;
+		isEven = false;
+		cv.notify_all();
 	}
 }
+
 void EvenOddNumbers::printOddNumbers() {
-	for (int i = 0;i <= maxNumber; i++) {
+	while (input < maxNumber) {
 		unique_lock <mutex> lock(printMutex);
-		while (input % 2 != 1) {
-			//wait until an odd number comes
-			lock.unlock();
-			this_thread::yield();				//Meanwhile, allowing other threads to run
-			lock.lock();
-			//chrono::milliseconds(1000);
+		if (isEven) {
+			//cout << "odd" << endl;
+			cv.wait(lock);	//current thread is blocked until the condition variable is notified
 		}
-		
+		this_thread::sleep_for(chrono::seconds(1));
 		cout << "Thread 2:" << input << endl;
 		input++;
+		isEven = true;
+		cv.notify_all();
 	}
 }
+
 
